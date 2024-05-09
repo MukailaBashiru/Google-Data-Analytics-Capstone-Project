@@ -158,7 +158,7 @@ Figure 10 indicates that both members and casual riders predominantly begin thei
 For members, based on figure 11, the highest average ride duration occurs at 5pm, while for casual riders, it is between 11am and 2pm. This mean that in as much as there is high demand for Cyclistic's bike at close of business by members, there is also possibility that the bikes will be driven for longer time than usual.
 
 
-
+The relevant code for this task can be found within the code chunk of the RMD file [here](https://github.com/MukailaBashiru/Google-Data-Analytics-Capstone-Project/commit/2ae059b8d1c5c2913d66f0c210d3c3e9e755c9f3)
 
 ## 6. Highlight of Key Findings
 
