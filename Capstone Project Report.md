@@ -103,60 +103,66 @@ Following the aforementioned steps, our final data set comprises 4,307,385 obser
 
 ## 5. Summary of Data Analysis with Supporting Visualizations
 
-### 5.1 Intial Observations
+### 5.1. Intial Observations
 
-#### 5.1.1 Summary of overall rides by User type
+#### 5.1.1. Summary of overall rides by User type
 
 The donut chart in figure 1 illustrates the distribution of rides taken by both members and casual riders over the past twelve months, starting from April 2023 to March 2024. The total number of rides within this period amounted to 4,307,385, with members accounting for 65% and casual riders for 35% of the total rides. Despite members taking a significantly higher number of rides than casual riders, the box plot in figure 1 reveals that, on average, casual riders tend to have longer ride duration compared to members.
 
+![Figure 1](https://github.com/MukailaBashiru/Images/blob/main/Rplot%201.png)
 
 
-#### 5.1.2 Summary of rides by ride type for members
+#### 5.1.2. Summary of rides by ride type for members
 
 Of the 2,813,256 member rides recorded in the past twelve months, figure 2 shows that 66% were on classic bikes and 34% were on electric bikes. The average ride duration for both ride types among members is similar.
 
+![Figure 2](https://github.com/MukailaBashiru/Images/blob/main/Rplot%202.png)
 
-#### Summary of rides by ride type for casual riders
+#### 5.1.3. Summary of rides by ride type for casual riders
 
 Out of the 1,494,129 rides recorded for casual riders in the past twelve months, 58% were on classic bikes, 38% were on electric bikes, and 4% were on docked bikes as shown in figure 3. The average ride duration for classic bikes, electric bikes, and docked bikes are 1,170.3, 850.825, and 1,809.43 seconds, respectively. After comparing the box plots in Figures 2 and 3, it is evident that casual riders, on average, have longer ride duration across all ride types compared to members.
 
+![Figure 3](https://github.com/MukailaBashiru/Images/blob/main/Rplot%203.png)
 
-
-### Summary of rides by user type for each month
+### 5.2. Summary of rides by user type for each month
 
 The lowest number of rides for both members and casual riders occurs in January, while the highest number of rides occurs in August for members and July for casual riders. Figure 4 demonstrates a general trend where the number of rides tends to peak during the summer months, likely due to the favorable weather conditions during this period.
 
+![Figure 4](https://github.com/MukailaBashiru/Images/blob/main/Rplot%204.png)
 
 The increased number of rides during the summer, as depicted in figure 4, also comes with longer period of rides during the summer as shown in figure 5 for both members and casual riders.
 
+![Figure 5](https://github.com/MukailaBashiru/Images/blob/main/Rplot%205.png)
 
-
-### Summary of rides by user type for each day of the week
+### 5.3. Summary of rides by user type for each day of the week
 
 The number of rides between Monday and Friday in figure 6 is not significantly different for members and for casual riders. However, there is a notable increase in rides on Saturday and Sunday for casual riders, while the number of rides drops during the weekend for members. This suggests that casual riders may mostly use Cyclistic bikes for leisure purposes.
 
-
+![Figure 6](https://github.com/MukailaBashiru/Images/blob/main/Rplot%206.png)
 
 While the number of rides for members is higher than that of casual riders across the week, as shown in figure 6, figure 7 indicates that casual riders tend to use Cyclistic bikes for longer periods of time every day than the members.
 
+![Figure 7](https://github.com/MukailaBashiru/Images/blob/main/Rplot%207.png)
 
-
-### Summary of rides by user type for each day of the month
+### 5.4. Summary of rides by user type for each day of the month
 
 Even though members and casual riders generally follow the same pattern of rides everyday, according to figure 8, we can see that the number of rides peaks for members on the 7th day of the month and for casual riders on the 4th day of the month. Both groups experience very low ride counts on the 31st day of the month.
 
-
+![Figure 8](https://github.com/MukailaBashiru/Images/blob/main/Rplot%208.png)
 
 While member rides outnumber casual rider rides on a daily basis, on average, casual riders use Cyclistic bikes for longer duration on daily basis compared to members based on figure 9.
 
+![Figure 9](https://github.com/MukailaBashiru/Images/blob/main/Rplot%209.png)
 
-### Overview of rides by user type across different hours of day
+### 5.5. Overview of rides by user type across different hours of day
 
 Figure 10 indicates that both members and casual riders predominantly begin their trips at 5pm, suggesting that there is high usage of Cyclistic bikes after the close of business. Additionally, both groups experience their lowest activity levels between 1am and 5am, and this can be attributed to little or no activity during this periods.
 
+![Figure 10](https://github.com/MukailaBashiru/Images/blob/main/Rplot%2010.png)
 
 For members, based on figure 11, the highest average ride duration occurs at 5pm, while for casual riders, it is between 11am and 2pm. This mean that in as much as there is high demand for Cyclistic's bike at close of business by members, there is also possibility that the bikes will be driven for longer time than usual.
 
+![Figure 11](https://github.com/MukailaBashiru/Images/blob/main/Rplot%2011.png)
 
 The relevant code for this task can be found within the code chunk of the RMD file [here](https://github.com/MukailaBashiru/Google-Data-Analytics-Capstone-Project/commit/2ae059b8d1c5c2913d66f0c210d3c3e9e755c9f3)
 
