@@ -1,0 +1,629 @@
+---
+title: "How does a bike-share navigate speedy success?"
+author: "Bashiru Mukaila"
+date: "2024-04-19"
+output:
+  pdf_document:
+    number_sections: true
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+fig_caption: yes
+urlcolor: blue
+linkcolor: blue
+fontsize: 12pt
+header-includes:
+  - \usepackage{float}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Load the required library
+library(tidyverse) # To be used for data wrangling.
+library(ggplot2)   # To be used for data visualization.
+library(dplyr)     # To be used for data manipulation.
+library(lubridate) # To be used for dates and times functions.
+library(janitor)   # To be used for the examination and cleaning dirty data.
+library(float)     # To be used for table positioning.
+```
+
+# Introduction {#sec:intr}
+
+This capstone project is part of the Google Data Analytics program, where I am tasked with assuming the role of a junior data analyst recently joining Cyclistic's marketing analytics team in Chicago. Cyclistic is a bike-share company, and our team of data analysts focuses on collecting, analysing, and reporting data to inform the company's marketing strategy.
+
+Under the guidance of Lily Moreno, the director of marketing and my manager, our team aims to enhance Cyclistic's future success by increasing the number of annual memberships. Financial analysis has shown that annual members contribute significantly more to profitability compared to casual riders. Consequently, our objective is to explore the differences in behaviour between casual riders and annual members to inform the development of a targeted marketing strategy aimed at converting casual riders into annual members.
+
+The report is structured as follows: Section \ref{sec:buztask} outlines the specific business tasks, Section \ref{sec:datasource} provides details on the data sources used, Section \ref{sec:datacleaning} describes the data cleaning and manipulation process, Section \ref{sec:datasum} presents a summary of the analysis accompanied by supporting visualizations, section \ref{sec:key} highlight the key findings, while Section \ref{sec:recom} offers recommendations based on the analysis and potential future work.
+
+
+# Clear Statement of the Business Task {#sec:buztask}
+
+The primary objective of this project is to investigate how annual members and casual riders use Cyclistic bikes differently.
+
+The secondary objectives is to explore the following questions:
+
+  1.	Why would casual riders buy Cyclistic annual memberships?
+  
+  2.	How can Cyclistic use digital media to influence casual riders to become members?
+
+
+
+# The Description of All Data Sources Used {#sec:datasource}
+
+The data for this project is the **[last twelve months Cyclistic’s historical trip data](https://divvy-tripdata.s3.amazonaws.com/index.html)** between April 2023 and March 2024. This is public data that can be used to explore how different customer types are using Cyclistic bikes. But the data-privacy issues prohibit us from using riders’ personally identifiable information. This means that we won’t be able to connect pass purchases to credit card numbers to determine if casual riders live in the Cyclistic service area or if they have purchased multiple single passes.
+
+The data source is reliable and verified to be original. It provides comprehensive insights into how various customer types use Cyclistic bikes. Additionally, the data is current and relevant, being released monthly. This data is provided by Motivate International, Inc. under this **[license](https://www.divvybikes.com/data-license-agreement)** and it can be accessed **[here](https://divvy-tripdata.s3.amazonaws.com/index.html)**.
+
+The data was downloaded as individual monthly files in CSV format, thus requiring consolidation into a single file for analysis.
+
+Each of the monthly files has the following columns:
+
+  1. **Ride id:** This shows the unique number giving to each trip.
+  
+  2. **Rideable type:** This specify the type of bike used during trip which are either classic bike, docked bike or electric bike.
+  
+  3. **Started at:** This represents the starting time for the trip.
+  
+  4. **Ended at:** This shows the end time of the trip.
+  
+  5. **Start station name:** This is where the trip started.
+  
+  6. **Start station id:** This is the unique identification code giving to the start station.
+  
+  7. **End station name:** This is where the trip ended.
+  
+  8. **End station id:** This is the unique identification code giving to the end station.
+  
+  9. **Start lat:** This is the latitude coordinate of where the trip started.
+  
+  10. **Start lng:** This is the longitude coordinate of where the trip started.
+  
+  11. **End lat:** This is the latitude coordinate of where the trip ended.
+  
+  12. **End lng:** This is the longitude coordinate of where the trip ended.
+  
+  13. **Member or casual:** This specify the customer type which can either be member or casual rider.
+
+
+
+# Data Cleaning and Manipulation Process {#sec:datacleaning}
+
+```{r process, include=FALSE}
+#=====================
+# STEP 1: COLLECT DATA
+#=====================
+
+# # Upload Divvy datasets (csv files)
+Trip_data_04_2023 <- read_csv("Data/202304-divvy-tripdata.csv")
+Trip_data_05_2023 <- read_csv("Data/202305-divvy-tripdata.csv")
+Trip_data_06_2023 <- read_csv("Data/202306-divvy-tripdata.csv")
+Trip_data_07_2023 <- read_csv("Data/202307-divvy-tripdata.csv")
+Trip_data_08_2023 <- read_csv("Data/202308-divvy-tripdata.csv")
+Trip_data_09_2023 <- read_csv("Data/202309-divvy-tripdata.csv")
+Trip_data_10_2023 <- read_csv("Data/202310-divvy-tripdata.csv")
+Trip_data_11_2023 <- read_csv("Data/202311-divvy-tripdata.csv")
+Trip_data_12_2023 <- read_csv("Data/202312-divvy-tripdata.csv")
+Trip_data_01_2024 <- read_csv("Data/202401-divvy-tripdata.csv")
+Trip_data_02_2024 <- read_csv("Data/202402-divvy-tripdata.csv")
+Trip_data_03_2024 <- read_csv("Data/202403-divvy-tripdata.csv")
+
+#====================================================
+# STEP 2: WRANGLE DATA AND COMBINE INTO A SINGLE FILE
+#====================================================
+
+# Compare column names for each of the files While the names don't have to be in the same order, they do need to match perfectly before we can use a command to join them into one file.
+
+all(sort(Reduce(intersect, lapply(Trip_data_04_2023, names), lapply(Trip_data_05_2023, names))) == sort(names(Trip_data_03_2024))) # This compares April and May 2023 data columns with March 2024 data columns
+
+all(sort(Reduce(intersect, lapply(Trip_data_06_2023, names), lapply(Trip_data_07_2023, names))) == sort(names(Trip_data_03_2024))) # This compares June and July 2023 data columns with March 2024 data columns
+
+all(sort(Reduce(intersect, lapply(Trip_data_08_2023, names), lapply(Trip_data_09_2023, names))) == sort(names(Trip_data_03_2024))) # This compares August and September 2023 data columns with March 2024 data columns
+
+all(sort(Reduce(intersect, lapply(Trip_data_10_2023, names), lapply(Trip_data_11_2023, names))) == sort(names(Trip_data_03_2024))) # This compares October and November 2023 data columns with March 2024 data columns
+
+all(sort(Reduce(intersect, lapply(Trip_data_12_2023, names))) == sort(names(Trip_data_03_2024))) # This compares December 2023 data columns with March 2024 data columns
+
+all(sort(Reduce(intersect, lapply(Trip_data_01_2024, names), lapply(Trip_data_02_2024, names))) == sort(names(Trip_data_03_2024))) # This compares January and February 2024 data columns with March 2024 data columns
+
+
+colnames(Trip_data_03_2024) # Inspecting just one of the files since they are confirmed to have the same column names
+
+
+# Combine individual monthly's data frames into one big data frame
+all_trip_data <- bind_rows(Trip_data_04_2023, 
+                       Trip_data_05_2023,
+                       Trip_data_06_2023,
+                       Trip_data_07_2023,
+                       Trip_data_08_2023,
+                       Trip_data_09_2023,
+                       Trip_data_10_2023,
+                       Trip_data_11_2023,
+                       Trip_data_12_2023,
+                       Trip_data_01_2024,
+                       Trip_data_02_2024,
+                       Trip_data_03_2024)
+# Inspect the combined data
+str(all_trip_data)
+
+# Rename member_casual column to user_type
+
+(all_trip_data <- rename(all_trip_data,
+                         user_type = member_casual
+                         ))
+
+# Convert ride_id and rideable_type to character so that they can stack correctly
+all_trip_data <- mutate(all_trip_data, ride_id = as.character(ride_id),
+                    rideable_type = as.character(rideable_type))
+# Inspect the data again
+str(all_trip_data)
+
+# Remove latitude and longitude related columns
+all_trip_data <- all_trip_data %>% 
+  select(-c(start_lat, start_lng, end_lat, end_lng))
+
+
+
+#======================================================
+# STEP 3: CLEAN UP AND ADD DATA TO PREPARE FOR ANALYSIS
+#======================================================
+
+# Inspect the new table that has been created
+colnames(all_trip_data) # List of column names
+dim(all_trip_data) # Dimensions of the data frame?
+head(all_trip_data) # See the first 6 rows of data frame
+tail(all_trip_data) # See the last 6 rows of data frame
+str(all_trip_data) # See list of columns and data types (numeric, character, etc)
+
+
+# There are a few problems we will need to fix:
+
+# (1) In the "member_casual" column, there should only be two names i.e members and casual.
+
+table(all_trip_data$user_type) # This confirm that there are two categories
+
+
+# (2) The data can only be aggregated at the ride-level, which is too granular. We will want to add some additional columns of data -- such as day, month, year -- that provide additional opportunities to aggregate the data.
+
+all_trip_data$date <- as.Date(all_trip_data$started_at) # The default format is yyyy-mm-dd
+all_trip_data$month <- format(as.Date(all_trip_data$date), "%b")
+all_trip_data$day <- format(as.Date(all_trip_data$date), "%d")
+all_trip_data$year <- format(as.Date(all_trip_data$date), "%Y")
+all_trip_data$day_of_week <- format(as.Date(all_trip_data$date), "%a")
+
+
+# (3) We will want to add a calculated field for length of ride. We will add "ride_length" to the dataframe.
+
+all_trip_data$ride_length <- as.numeric(as.character(difftime(all_trip_data$ended_at,all_trip_data$started_at))) # Add a "ride_length" calculation to all_trip_data (in seconds) and also Convert "ride_length" from Factor to numeric so we can run calculations on the data
+
+str(all_trip_data)  # Inspect the structure of the new added columns
+
+
+# (4) There are some rides where ride_length shows up as negative which are consider wrong. There are also some rides with zero ride length. There are some trips with missing information. We will want to delete these rides. We also want to set the maximum ride length to 5400 seconds (1 hour and 30 minutes) which is consider a reasonable duration to ride bike either for work or for leisure.
+
+anyDuplicated(all_trip_data$ride_id)  # Checking if there is duplicate ride id
+initial_rows <- nrow(all_trip_data)  # Storing the initial number of row
+
+# We will create a new version of the dataframe (v2) since data is being removed
+
+all_trip_data_v2 <- drop_na(all_trip_data)  # Dropping records with NA's
+
+all_trip_data_v2 <- all_trip_data_v2[!(all_trip_data_v2$ride_length <= 0 |
+                                       all_trip_data_v2$ride_length > 5400),]  # Removing the negative ride_length and outliers.
+
+print(paste("Removed", initial_rows - nrow(all_trip_data_v2),"rows")) # Checking the number of rows removed
+
+
+# Export cleaned data to a csv file
+
+# write.csv(all_trip_data_v2, "Data/all_trip_data_v2.csv")
+
+```
+
+We have chosen R as our primary tool for this project for the following reasons:
+
+  1.	R's robust capabilities make it ideal for handling large data sets like the last twelve months of Cyclistic's historical trip data.
+  
+  2.	Given the need for thorough data aggregation, cleaning, and manipulation, R offers a variety of powerful packages tailored for effective data manipulation and analysis.
+  
+  3.	To explore bike usage trends through compelling visualizations, R provides an extensive selection of packages for generating high-quality, customizable plots and graphs.
+  
+  4.	Leveraging R Markdown, we will effortlessly produce the required project report, ensuring it's easily reproducible for anyone interested.
+
+The following steps were taken to ensure that the data is clean and ready for exploration:
+
+
+## Step 1: Collect Data {#subsec:step1}
+
+The historical trip data for Cyclistic from April 2023 to March 2024, spanning the last twelve months, was imported into R as individual monthly files.
+
+## Step 2: Wrangle Data and Combine into a Single File {#subsec:step2}
+
+We cross-checked the column names across all files. Although the order of column names may vary, they must match exactly before merging them into a single file. After this comparison, we confirmed that all files share identical column names, as outlined in section \ref{sec:datasource}. Consequently, we merged the individual monthly data frames into one comprehensive data frame.
+
+We identified formatting issues in the **ride id** and **rideable type** columns, which we resolved by converting them into character strings. To ensure clarity of name, we rename **member_casual** column to **user_type**. Additionally, we eliminated redundant latitude and longitude columns, as they are unnecessary variables for this project.
+
+## Step 3: Clean Up and Add Data to Prepare for Analysis {#subsec:step3}
+
+Upon completing step 2, we conducted an inspection of the merged data, revealing a total of `r prettyNum(nrow(all_trip_data), big.mark = ",")` observations with a reduction in column names to `r ncol(all_trip_data) - 6`. Subsequent checks were performed to address identified issues:
+
+  1.	We validated the **User_type** column, which ideally should only contain two categories: member and casual. This validation aligned with the information provided by the business.
+  
+  2.	Recognizing that the data granularity was too limited to the ride-level, we opted to enhance it by incorporating additional columns such as day, month, and year. This augmentation offers broader opportunities for data aggregation.
+  
+  3.	To enrich the dataset, we introduced a calculated field denoting the length of each ride, labeled **ride_length**.
+  
+  4.	During our scrutiny, we observed instances of negative ride lengths, zero ride lengths and trips with missing information. To maintain data integrity, we eliminated these anomalies from the dataset.
+  
+  5.	We also set the maximum ride length to `r prettyNum(5400, big.mark = ",")` seconds (1 hour and 30 minutes) which we consider a reasonable duration to ride bike either for work or for leisure. We have regarded ride length higher than this as an outlier.
+
+Following the aforementioned steps, our final data set comprises `r prettyNum(nrow(all_trip_data_v2), big.mark = ",")` observations. This figure reflects the removal of `r prettyNum(nrow(all_trip_data) - nrow(all_trip_data_v2), big.mark = ",")` observations containing missing information, inaccurately reported times and outliers.
+
+*\textcolor{red}{The relevant code for this task can be found within the code chunk of this document's RMD file.}*
+
+
+# Summary of Data Analysis with Supporting Visualizations {#sec:datasum}
+
+## Intial Observations {#subsec:anal1}
+
+### Summary of overall rides by User type
+
+```{r first_table, warning=FALSE, include=FALSE}
+
+# Create a summary table of counts by membership type
+
+first_table <- all_trip_data_v2 %>% 
+  group_by(user_type) %>% 
+  summarise(count = n())
+
+# Lay the foundation for donuts chart
+
+first_table <- data.frame(first_table$user_type, 
+                     first_table$count)
+
+first_table$proportion <- round(first_table$first_table.count / sum(first_table$first_table.count),2)
+
+first_table$ymax <- cumsum(first_table$proportion)
+first_table$ymin <- c(0, head(first_table$ymax, n = -1))
+first_table$labelposition <- (first_table$ymax + first_table$ymin) / 2
+first_table$label <- paste0(first_table$first_table.user_type,
+                       "\n Num: ", format(round(first_table$first_table.count, digits = 2), big.mark = ","),
+                       "\n Prop: ", format(round(first_table$proportion*100, digits = 2), nsmall = 0), "%")
+
+```
+
+The donut chart in figure \ref{fig:viz1} illustrates the distribution of rides taken by both members and casual riders over the past twelve months, starting from April 2023 to March 2024. The total number of rides within this period amounted to `r prettyNum(nrow(all_trip_data_v2), big.mark = ",")`, with members accounting for `r first_table[first_table$first_table.user_type == "member",3] * 100`% and casual riders for `r first_table[first_table$first_table.user_type == "casual",3] * 100`% of the total rides. Despite members taking a significantly higher number of rides than casual riders, the box plot in figure \ref{fig:viz1} reveals that, on average, casual riders tend to have longer ride duration compared to members.
+
+```{r analysis1, echo=FALSE, warning=FALSE, out.width = '75%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz1} Summary of overall rides by User type."}
+
+# Create a donut chart showing the count and proportion of member_casual.
+
+donuts_chart <- ggplot(first_table, aes(ymax=ymax, ymin=ymin, 
+                   xmax = 4, xmin = 3, fill = first_table.user_type)) +
+  geom_rect() +
+  geom_label(x = 3.5, aes(y = labelposition, label = label), size = 3.5) +
+  coord_polar(theta= "y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(title="The count and percentage of rides by user type") +
+  theme(plot.title = element_text(hjust = 0.5, size = 8), legend.position = "none",
+        panel.background = element_rect(fill = "gray88", color = "white"))
+
+# Create a box plot for ride_length by user type
+
+usertype_boxplot <- ggplot(all_trip_data_v2, aes(x = user_type, y = ride_length)) +
+  geom_boxplot(fill = "steelblue") +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 6000, 500)) +
+  labs(x = "User type", y = "Ride length (in secs)", title = "Summary statistics of ride duration by user type")  +
+  theme(plot.title = element_text(size = 8))
+
+gridExtra::grid.arrange(donuts_chart, usertype_boxplot, nrow = 1)
+
+```
+
+### Summary of rides by ride type for members
+
+```{r second_table1, warning=FALSE, include=FALSE}
+
+# Member's rides summary by ride type
+
+Partial_data1 <- all_trip_data_v2 %>%
+  filter(user_type == "member") # Extract data for member only
+
+second_table1 <- Partial_data1 %>%
+  group_by(rideable_type) %>% 
+  summarise(count = n())
+
+# Lay the foundation for donuts chart
+
+second_table1 <- data.frame(second_table1$rideable_type,
+                           second_table1$count)
+
+second_table1$proportion <- round(second_table1$second_table1.count / sum(second_table1$second_table1.count),2)
+
+second_table1$ymax <- cumsum(second_table1$proportion)
+second_table1$ymin <- c(0, head(second_table1$ymax, n = -1))
+second_table1$labelposition <- (second_table1$ymax + second_table1$ymin) / 2
+second_table1$label <- paste0(second_table1$second_table1.rideable_type,
+                             "\n Num: ", format(round(second_table1$second_table1.count, digits = 2), big.mark = ","),
+                             "\n Prop: ", format(round(second_table1$proportion*100, digits = 2), nsmall = 0), "%")
+```
+
+Of the `r prettyNum(first_table[first_table$first_table.user_type == "member",2], big.mark = ",")` member rides recorded in the past twelve months, figure \ref{fig:viz2} shows that `r second_table1[second_table1$second_table1.rideable_type == "classic_bike",3] * 100`% were on classic bikes and `r second_table1[second_table1$second_table1.rideable_type == "electric_bike",3] * 100`% were on electric bikes. The average ride duration for both ride types among members is similar.
+
+```{r analysis2, echo=FALSE, warning=FALSE, out.width = '75%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz2} Summary of rides by ride type for members."}
+
+# Create a donuts chart showing the count and proportion of members by ride type.
+
+m_donuts_chart <- ggplot(second_table1, aes(ymax=ymax, ymin=ymin, 
+                   xmax = 4, xmin = 3, fill = second_table1.rideable_type)) +
+  geom_rect() +
+  geom_label(x = 3.5, aes(y = labelposition, label = label), size = 3.5) +
+  coord_polar(theta= "y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(title="The count and percentage of rides by ride type for members") +
+  theme(plot.title = element_text(hjust = 0.5, size = 8), legend.position = "none",
+        panel.background = element_rect(fill = "gray88", color = "white"))
+
+
+# Create a box plot for ride_length by user type
+
+m_boxplot <- ggplot(Partial_data1, aes(x = rideable_type, y = ride_length)) +
+  geom_boxplot(fill = "steelblue") +
+  labs(x = "Ride type", y = "Ride length (in secs)", title = "Summary statistics of ride duration by ride type for members")  +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 6000, 500)) +
+  theme(plot.title = element_text(size = 7))
+
+gridExtra::grid.arrange(m_donuts_chart, m_boxplot, nrow = 1)
+```
+
+### Summary of rides by ride type for casual riders
+
+```{r second_table2, warning=FALSE, include=FALSE}
+
+# Casual riders summary by ride type
+
+Partial_data2 <- all_trip_data_v2 %>%
+  filter(user_type == "casual") # Extract data for casual riders only
+
+second_table2 <- Partial_data2 %>%
+  group_by(rideable_type) %>% 
+  summarise(count = n(), avg_ride_length = mean(ride_length))
+
+# Lay foundation for donuts chart.
+
+second_table2 <- data.frame(second_table2$rideable_type,
+                            second_table2$count,
+                            second_table2$avg_ride_length)
+
+second_table2$proportion <- round(second_table2$second_table2.count / sum(second_table2$second_table2.count),2)
+
+second_table2$ymax <- cumsum(second_table2$proportion)
+second_table2$ymin <- c(0, head(second_table2$ymax, n = -1))
+second_table2$labelposition <- (second_table2$ymax + second_table2$ymin) / 2
+second_table2$label <- paste0(second_table2$second_table2.rideable_type,
+                             "\n Num: ", format(round(second_table2$second_table2.count, digits = 2), big.mark = ","),
+                             "\n Prop: ", format(round(second_table2$proportion*100, digits = 2), nsmall = 0), "%")
+```
+
+Out of the `r prettyNum(first_table[first_table$first_table.user_type == "casual",2], big.mark = ",")` rides recorded for casual riders in the past twelve months, `r second_table2[second_table2$second_table2.rideable_type == "classic_bike",4] * 100`% were on classic bikes, `r second_table2[second_table2$second_table2.rideable_type == "electric_bike",4] * 100`% were on electric bikes, and `r second_table2[second_table2$second_table2.rideable_type == "docked_bike",4] * 100`% were on docked bikes as shown in figure \ref{fig:viz3}. The average ride duration for classic bikes, electric bikes, and docked bikes are `r prettyNum(second_table2[second_table2$second_table2.rideable_type == "classic_bike",3], big.mark = ",")`, `r prettyNum(second_table2[second_table2$second_table2.rideable_type == "electric_bike",3], big.mark = ",")`, and `r prettyNum(second_table2[second_table2$second_table2.rideable_type == "docked_bike",3], big.mark = ",")` seconds, respectively. After comparing the box plots in Figures \ref{fig:viz2} and \ref{fig:viz3}, it is evident that casual riders, on average, have longer ride duration across all ride types compared to members.
+
+```{r analysis3, echo=FALSE, warning=FALSE, out.width = '75%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz3} Summary of rides by ride type for casual riders."}
+
+# Create a donuts chart showing the count and proportion of casual riders by ride type.
+
+c_donuts_chart <- ggplot(second_table2, aes(ymax=ymax, ymin=ymin, 
+                   xmax = 4, xmin = 3, fill = second_table2.rideable_type)) +
+  geom_rect() +
+  geom_label(x = 3.5, aes(y = labelposition, label = label), size = 3.5) +
+  coord_polar(theta= "y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(title="The count and percentage of rides by ride type for casual riders.") +
+  theme(plot.title = element_text(hjust = 0.5, size = 8), legend.position = "none",
+        panel.background = element_rect(fill = "gray88", color = "white"))
+
+
+# Create a box plot for ride_length by user type
+
+c_boxplot <- ggplot(Partial_data2, aes(x = rideable_type, y = ride_length)) +
+  geom_boxplot(fill = "steelblue") +
+  labs(x = "Ride type", y = "Ride length (in secs)", title = "Summary statistics of ride duration by ride type for casual riders.")  +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 6000, 500)) +
+  theme(plot.title = element_text(size = 7))
+
+gridExtra::grid.arrange(c_donuts_chart, c_boxplot, nrow = 1)
+```
+
+## Summary of rides by user type for each month {#subsec:anal2}
+
+The lowest number of rides for both members and casual riders occurs in January, while the highest number of rides occurs in August for members and July for casual riders. Figure \ref{fig:viz4} demonstrates a general trend where the number of rides tends to peak during the summer months, likely due to the favorable weather conditions during this period.
+
+```{r analysis4, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz4} The number of rides by user type for each month."}
+
+# Create a monthly summary of rides by user type
+
+third_table <- all_trip_data_v2 %>%
+  group_by(user_type, month) %>% 
+  summarise(number_of_rides = n(), avg_ride_length = mean(ride_length), .groups = "drop")
+
+# Create a bar chart for monthly number of rides by user type
+
+month_order <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec") # create the order of the months
+
+ggplot(third_table, aes(x = factor(month, levels = month_order), y = number_of_rides, fill = user_type)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 400000, 50000)) +
+  labs(x = "Months", y = "Number of rides")
+```
+
+The increased number of rides during the summer, as depicted in figure \ref{fig:viz4}, also comes with longer period of rides during the summer as shown in figure \ref{fig:viz5} for both members and casual riders.
+
+```{r analysis5, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz5} The average ride duration by user type for each month."}
+
+# Create a bar chart for monthly number of rides by user type
+
+ggplot(third_table, aes(x = factor(month, levels = month_order), y = avg_ride_length, fill = user_type)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 1200, 200)) +
+  labs(x = "Months", y = "Average Ride length (in secs)")
+```
+
+## Summary of rides by user type for each day of the week {#subsec:anal3}
+
+The number of rides between Monday and Friday in figure \ref{fig:viz6} is not significantly different for members and for casual riders. However, there is a notable increase in rides on Saturday and Sunday for casual riders, while the number of rides drops during the weekend for members. This suggests that casual riders may mostly use Cyclistic bikes for leisure purposes.
+
+```{r analysis6, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz6} The number of rides by user type for each day of the week."}
+
+# Create a Day of the week summary of rides by user type.
+
+fourth_table <- all_trip_data_v2 %>%
+  group_by(user_type, day_of_week) %>% 
+  summarise(number_of_rides = n(), avg_ride_length = mean(ride_length), .groups = "drop")
+
+# Create a bar chart for Days of the week number of rides by user type
+
+week_order <- c( "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat") # create the order of the Week days
+
+ggplot(fourth_table, aes(x = factor(day_of_week, levels = week_order), y = number_of_rides, fill = user_type)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 600000, 100000)) +
+  labs(x = "Day of the Week", y = "Number of rides")
+```
+
+While the number of rides for members is higher than that of casual riders across the week, as shown in figure \ref{fig:viz6}, figure \ref{fig:viz7} indicates that casual riders tend to use Cyclistic bikes for longer periods of time every day than the members.
+
+```{r analysis7, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz7} The average ride duration by user type for each day of the week."}
+
+# Create a bar chart for Weekly number of rides by user type
+
+ggplot(fourth_table, aes(x = factor(day_of_week, levels = week_order), y = avg_ride_length, fill = user_type)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 1400, 200)) +
+  labs(x = "Days of the week", y = "Average Ride length (in secs)")
+```
+
+## Summary of rides by user type for each day of the month {#subsec:anal4}
+
+Even though members and casual riders generally follow the same pattern of rides everyday, according to figure \ref{fig:viz8}, we can see that the number of rides peaks for members on the 7th day of the month and for casual riders on the 4th day of the month. Both groups experience very low ride counts on the 31st day of the month.
+
+```{r analysis8, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz8} The number of rides by user type for each day of the month."}
+
+# Create a Days of the month summary of rides by user type.
+
+fifth_table <- all_trip_data_v2 %>%
+  group_by(user_type, day) %>% 
+  summarise(number_of_rides = n(), avg_ride_length = mean(ride_length), .groups = "drop")
+
+# Create a line chart for Days of the month number of rides by user type
+
+ggplot(fifth_table, aes(x = as.numeric(day), y = number_of_rides, color = user_type)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 120000, 10000)) +
+  scale_x_continuous(breaks = seq(1, 31, 1)) +
+  labs(x = "Days of the month", y = "Number of rides")
+```
+
+While member rides outnumber casual rider rides on a daily basis, on average, casual riders use Cyclistic bikes for longer duration on daily basis compared to members based on figure \ref{fig:viz9}.
+
+```{r analysis9, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz9} The average ride duration by user type for each day of the month."}
+
+# Create a line chart for Days of the month Average Ride length by User type
+
+ggplot(fifth_table, aes(x = as.numeric(day), y = avg_ride_length, color = user_type)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 1200, 100)) +
+  scale_x_continuous(breaks = seq(1, 31, 1)) +
+  labs(x = "Days of the month", y = "Average Ride length (in secs)")
+```
+
+## Overview of rides by user type across different hours of day {#subsec:anal5}
+
+Figure \ref{fig:viz10} indicates that both members and casual riders predominantly begin their trips at 5pm, suggesting that there is high usage of Cyclistic bikes after the close of business. Additionally, both groups experience their lowest activity levels between 1am and 5am, and this can be attributed to little or no activity during this periods.
+
+```{r analysis10, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz10} Number of rides by user type across different hours of the day."}
+
+# Create the Hours of the day summary of rides by user type.
+
+sixth_table <- all_trip_data_v2 %>%
+  mutate(hour_of_day = hour(started_at)) %>%
+  group_by(user_type, hour_of_day) %>% 
+  summarise(number_of_rides = n(), avg_ride_length = mean(ride_length), .groups = "drop")
+
+# Create a line chart for Hours of the day number of rides by user type
+
+ggplot(sixth_table, aes(x = hour_of_day, y = number_of_rides, color = user_type)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 400000, 50000)) +
+  scale_x_continuous(breaks = seq(1, 24, 1)) +
+  labs(x = "Hours of the Day", y = "Number of rides")
+```
+
+For members, based on figure \ref{fig:viz11}, the highest average ride duration occurs at 5pm, while for casual riders, it is between 11am and 2pm. This mean that in as much as there is high demand for Cyclistic's bike at close of business by members, there is also possibility that the bikes will be driven for longer time than usual.
+
+```{r analysis11, echo=FALSE, warning=FALSE, out.width = '70%', fig.align = "center", fig.pos = "H", fig.cap = "\\label{fig:viz11} Average ride duration by user type across different hours of the day."}
+
+# Create a line chart for Hours of the day Average Ride length by User type
+
+ggplot(sixth_table, aes(x = hour_of_day, y = avg_ride_length, color = user_type)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_number(), breaks = seq(0, 1600, 100)) +
+  scale_x_continuous(breaks = seq(1, 24, 1)) +
+  labs(x = "Hours of the day", y = "Average Ride length (in secs)")
+
+```
+
+*\textcolor{red}{The relevant code for this task can be found within the code chunk of this document's RMD file.}*
+
+# Highlight of Key Findings {#sec:key}
+
+Below are the key findings:
+
+  1.	Members constitute the largest proportion of Cyclistic bike riders across all levels.
+  
+  2.	Casual riders, regardless of ride type, month, week, day, or hour, typically use Cyclistic's bikes for longer duration on average than members. This underscores the importance for casual riders to invest in Cyclistic annual memberships, ensuring they receive maximum value for their money.
+  
+  3.	The classic bike is the preferred ride type for both members and casual riders.
+  
+  4.	There is an increase in rides during the summer months for both members and casual riders, with longer duration compared to other seasons.
+  
+  5.	The busiest day for Cyclistic bikes is Saturday for casual riders and Thursday for members.
+  
+  6.	Rush hour for Cyclistic bikes occurs at 5pm for both members and the casual riders.
+
+
+# Recommendations Based on the Analysis {#sec:recom}
+
+Cyclistic can employ the following strategies to convert casual riders into members:
+
+  1.	**Implementing a time limit per trip for casual packages:** Given that casual riders tend to ride for longer duration on average than members, Cyclistic can introduce time limits to casual packages to encourage registration as a member. For example, setting a time limit of 900 seconds (15 minutes) per trip for casual riders could prompt over 40% of them to opt for membership before their next ride.
+  
+  2.	**Introducing usage frequency limits for casual packages:** Cyclistic could restrict the number of times riders can use bikes through casual packages. For instance, if a casual rider uses Cyclistic bikes three times, with each ride duration being less than 900 seconds (15 minutes), they would be prompted to register as a member for their fourth ride. This approach would encourage prospective regular casual riders to become members.
+  
+  3.	**Offering a flexible payment plan exclusively for casual riders converting to members:** Alongside the above strategies, Cyclistic could introduce a flexible payment plan allowing casual riders converting to members to pay their annual membership fees in installments. This initiative would motivate casual riders who may find it challenging to afford the annual membership fee in one payment.
+  
+  4.	**Expanding the scope of advertising:** Cyclistic can intensify the usage of digital platforms to showcase benefits and testimonies from satisfied current annual members to attract more casual riders to become members.
+
+
+Potential future work may involve:
+
+  1.	Providing insights into the personal information of riders, including their full names, to determine whether casual riders have purchased multiple passes or only single passes. This analysis would enable us to quantify the percentage of casual riders who could potentially be converted by introducing limits on usage frequency.
+  
+  2.	Analyzing price insights based on user type to forecast the impact of introducing various discounts. This examination would help project the potential effects of different discount strategies.
+
+
+# Reference {#sec:ref}
+
+<https://www.statmethods.net/input/dates.html>
+
+<https://stat.ethz.ch/R-manual/R-devel/library/base/html/difftime.html>
+
+<https://www.datasciencemadesimple.com/delete-or-drop-rows-in-r-with-conditions-2/>
+
+<https://datatofish.com/export-dataframe-to-csv-in-r/>
+
+<https://www.optimonk.com/limited-time-offers/>
